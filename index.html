@@ -131,7 +131,7 @@ window.randomwebm = webm;
       var config = {
         arguments: [],
         dataUrl: dataUrl,
-        frameworkUrl: buildUrl + "/fnae.framework.js.br",
+        frameworkUrl: buildUrl + "/fnae.framework.js",
         codeUrl: buildUrl + "/fnae.wasm.br",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
@@ -157,6 +157,7 @@ window.randomwebm = webm;
           progressBarFull.style.width = 100 * progress + "%";
         }).then((unityInstance) => {
           loadingBar.style.display = "none";
+          loadingText.remove();
         }).catch((message) => {
           alert(message);
         });
