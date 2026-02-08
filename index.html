@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
-    <base href="https://cdn.jsdelivr.net/gh/web-ports/fnae@latest/">
+    <base href="https://cdn.jsdelivr.net/gh/web-ports/fnae@afd4e5071add297d6169665a4f999d62f312532e/">
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity Web Player | Five Night's at BIG E</title>
@@ -20,7 +20,6 @@
           <div id="unity-progress-bar-full"></div>
         </div>
       </div>
-      <div id="unity-warning"> </div>
     </div>
     <script>
 var loadingText = document.querySelector("#loading-text");
@@ -53,25 +52,14 @@ var loadingText = document.querySelector("#loading-text");
       }
       return fullBuffer.buffer;
     }
-async function fetchAndDecompressBrotli(url) {
-  const res = await fetch(url);
-  const compressed = new Uint8Array(await res.arrayBuffer());
-  return BrotliDecode(compressed).buffer;
-}
-async function mergeFiles(fileParts) {
-  const buffers = await Promise.all(
-    fileParts.map(fetchAndDecompressBrotli)
-  );
-  if (fileParts.some(p => p.includes(".br."))) {
-  const mergedBlob = new Blob(buffers, {
-    type: "application/octet-stream"
-  });
-} else {
-  const mergedBlob = new Blob(buffers);
-}
 
-  return URL.createObjectURL(mergedBlob);
-}
+    async function mergeFiles(fileParts, cacheKey) {
+      const buffers = await Promise.all(
+        fileParts.map(part => fetchWithProgress(part))
+      );
+      const mergedBlob = new Blob(buffers);
+      return URL.createObjectURL(mergedBlob);
+    }
 
     function getParts(file, start, end) {
       let parts = [];
@@ -88,33 +76,23 @@ async function mergeFiles(fileParts) {
       ]);
 
 window.randomwebm = webm;
-            const originalFetch = window.fetch;
-            window.fetch = async function(input, init) {
-                let urlString;
+const realSrc = Object.getOwnPropertyDescriptor(
+  HTMLMediaElement.prototype,
+  "src"
+);
 
-                if (input instanceof Request) {
-                    urlString = input.url;
-                } else {
-                    urlString = String(input);
-                }
+Object.defineProperty(HTMLMediaElement.prototype, "src", {
+  set(value) {
+    if (typeof value === "string" && value.includes("202512191935.mp4")) {
+      value = window.randomwebm;
+    }
+    return realSrc.set.call(this, value);
+  },
+  get() {
+    return realSrc.get.call(this);
+  }
+});
 
-                if (urlString.includes("202512191935.webm")) {
-                    if (input instanceof Request) {
-                        input = new Request(window.randomwebm, input);
-                    } else {
-                        input = window.randomwebm;
-                    }
-                }
-                return originalFetch(input, init);
-            };
-
-            const originalOpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-                if (url.includes("202512191935.webm")) {
-                    url = window.randomwebm;
-                }
-                return originalOpen.call(this, method, url, ...rest);
-            };
 
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
@@ -123,21 +101,7 @@ window.randomwebm = webm;
       var warningBanner = document.querySelector("#unity-warning");
 
       function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
+
       }
 
       var buildUrl = "Build";
